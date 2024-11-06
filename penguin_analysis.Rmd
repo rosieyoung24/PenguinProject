@@ -1,0 +1,124 @@
+---
+title: "penguin_analysis"
+author: "Rosie Young"
+date: "2024-10-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(janitor)
+library(here)
+library(dplyr)
+library(ggplot2)
+
+# Loads all custom cleaning functions from cleaning.R
+source(here("functions","cleaning.R"))
+
+
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+# Load raw penguin data from saved .csv file
+# So we can easily access the raw version of data again 
+# Read only can make it so you can only look at the initial raw data and not edit it 
+penguins_raw <- read.csv(here("data","penguins_raw.csv"))
+
+# Optional: View the structure of penguins_raw to confirm data loading
+# str(penguins_raw)
+
+```
+
+## Cleaning Data
+
+We can use the functions from libraries like janitor and also our own functions, like those in cleaning.R. 
+
+```{r}
+
+
+# Pipe %>% chains the functions together (control, shift, m)
+# We can also make functions within functions to do this 
+
+penguins_clean <- penguins_raw %>%
+  clean_column_names() %>%                    # Standardize column names
+  remove_columns(c("comments", "delta")) %>%   # Remove specified columns
+  shorten_species() %>%                        # Shorten species names
+  remove_empty_columns_rows()               # Remove empty columns and rows
+
+# warning symbols as the function is not defined locally in your script (it is in cleaning.R) - doesn't matter as long as we run the start of script 
+
+# Check the output 
+colnames(penguins_clean)
+
+# Save the clean data 
+write_csv(penguins_clean, here("data", "penguins_clean.csv"))
+
+# To check column names
+# colnames(penguins_clean)
+
+```
+
+
+## Including Plots
+
+To make your own function start with:
+plot_boxplot <- function(data, species_colours) {
+
+```{r}
+
+# penguins_clean <- read_csv(here("data", "penguins_clean.csv"))
+
+# Define color-blind-friendly colors for each penguin species
+species_colours <- c("Adelie" = "darkorange",
+                     "Chinstrap" = "purple",
+                     "Gentoo" = "cyan4")
+
+# Define the function to prepare data and create the boxplot
+plot_boxplot <- function(data, species_colours) {
+  # Prepare the data by selecting relevant columns and dropping NA values
+  data <- data %>%
+    select(species, flipper_length_mm) %>%
+    drop_na()
+  
+  # Create the boxplot
+  flipper_boxplot <- ggplot(
+    data = data,
+    aes(x = species, y = flipper_length_mm)
+  ) +
+    geom_boxplot(aes(color = species_colours), show.legend = FALSE) +
+    geom_jitter(
+      aes(color = species_colours),
+      alpha = 0.3,
+      show.legend = FALSE,
+      position = position_jitter(width = 0.2, seed = 0)
+    ) +
+    scale_color_manual(values = species_colours) +
+    labs(x = "Penguin species", y = "Flipper length (mm)") +
+    theme_bw()
+  
+  # Display the plot
+  print(flipper_boxplot)
+}
+
+# Use the function with your cleaned penguin data
+plot_boxplot(penguins_clean, species_colours)
+
+# this isn't working 
+
+
+```
+
+
+
+
